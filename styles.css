@@ -1,0 +1,80 @@
+/* Quiet UI: LiveSync's status as a dot. The dot exists only inside LiveSync's own status box
+   (.livesync-status) and next to its status-bar item (.syncstatusbar). Without either body class
+   (LiveSync absent or unreadable) nothing here applies and LiveSync's line shows as LiveSync draws it. */
+
+.quiet-ui-sync-dot {
+	display: none;
+}
+
+/* Dot mode: everything LiveSync puts in its box is hidden; the dot takes its place. */
+body.quiet-ui-sync-as-dot .livesync-status > :not(.quiet-ui-sync-dot) {
+	display: none !important;
+}
+
+body.quiet-ui-sync-as-dot .livesync-status > .quiet-ui-sync-dot,
+body.quiet-ui-sync-as-dot .quiet-ui-sync-bar-item > .quiet-ui-sync-dot,
+body.quiet-ui-sync-as-line .quiet-ui-sync-bar-item > .quiet-ui-sync-dot {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	opacity: 1;
+	filter: none;
+	-webkit-filter: none;
+}
+
+/* The editor dot: a 44 px tap target at the top-right, where LiveSync's line sits.
+   LiveSync's box is pointer-events:none so it never blocks the editor; only the dot takes taps. */
+body.quiet-ui-sync-as-dot .livesync-status > .quiet-ui-sync-dot {
+	pointer-events: auto;
+	width: 44px;
+	height: 44px;
+	margin: 0 -8px -12px auto;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* Line mode: LiveSync's own line, made tappable (44 px tall) so a tap folds it back to the dot. */
+body.quiet-ui-sync-as-line .livesync-status .livesync-status-statusline {
+	pointer-events: auto;
+	cursor: pointer;
+	width: fit-content;
+	margin-left: auto;
+	min-height: 44px;
+	box-sizing: border-box;
+	padding: 12px 0 12px 12px;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.quiet-ui-sync-dot-mark {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--text-faint);
+	box-shadow: 0 0 0 2px var(--background-primary);
+}
+
+.quiet-ui-sync-dot.is-idle .quiet-ui-sync-dot-mark {
+	background-color: var(--color-green);
+}
+
+.quiet-ui-sync-dot.is-busy .quiet-ui-sync-dot-mark {
+	background-color: var(--color-orange);
+}
+
+.theme-dark .quiet-ui-sync-dot.is-busy .quiet-ui-sync-dot-mark {
+	background-color: var(--color-yellow);
+}
+
+.quiet-ui-sync-dot.is-stopped .quiet-ui-sync-dot-mark {
+	background-color: var(--color-red);
+}
+
+/* Desktop status bar. */
+.quiet-ui-sync-bar-item > .quiet-ui-sync-dot {
+	min-width: 20px;
+	height: 100%;
+}
+
+.quiet-ui-hidden {
+	display: none !important;
+}
