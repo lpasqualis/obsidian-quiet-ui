@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-quiet-ui",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "Obsidian plugin: Self-hosted LiveSync's status line as a tap-to-expand dot, and note Properties folded on open.",
 	"main": "main.js",
 	"type": "module",
@@ -9,7 +9,12 @@
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json"
 	},
-	"keywords": ["obsidian", "obsidian-plugin", "livesync", "properties"],
+	"keywords": [
+		"obsidian",
+		"obsidian-plugin",
+		"livesync",
+		"properties"
+	],
 	"license": "MIT",
 	"devDependencies": {
 		"@types/node": "^22.15.17",

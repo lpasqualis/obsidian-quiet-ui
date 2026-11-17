@@ -7,6 +7,8 @@ export interface SyncReading {
 	state: SyncState;
 	/** One short phrase for the dot's tooltip and screen readers. */
 	label: string;
+	/** A number that moves whenever anything is pushed or pulled (LiveSync's sequence counters); undefined when unreadable. */
+	activity?: number;
 }
 
 interface Reactive<T> {
@@ -68,11 +70,13 @@ export function readSyncState(app: App): SyncReading {
 		return { state: "unknown", label: "LiveSync status unavailable" };
 	}
 
-	if (status === "ERRORED") return { state: "stopped", label: "Sync error" };
+	const seq = (n: number | undefined) => (typeof n === "number" && Number.isFinite(n) ? n : 0);
+	const activity = seq(stats?.lastSyncPushSeq) + seq(stats?.lastSyncPullSeq) + seq(stats?.maxPushSeq) + seq(stats?.maxPullSeq);
+	if (status === "ERRORED") return { state: "stopped", label: "Sync error", activity };
 	const live = plugin?.core?.settings?.liveSync === true;
 	// In LiveSync mode replication should never end; in the on-event and periodic modes an ended
 	// replication is the normal resting state.
-	if (live && ENDED.has(status)) return { state: "stopped", label: "Sync stopped" };
+	if (live && ENDED.has(status)) return { state: "stopped", label: "Sync stopped", activity };
 
 	const pending =
 		count(services.replication?.replicationResultCount) +
@@ -86,7 +90,7 @@ export function readSyncState(app: App): SyncReading {
 	const checking =
 		couch !== undefined && couch.phase !== "idle" && (couch.pull?.checking === true || couch.push?.checking === true);
 	if (TRANSFERRING.has(status) || checking || pending > 0) {
-		return { state: "busy", label: pending > 0 ? `Syncing, ${pending} pending` : "Syncing" };
+		return { state: "busy", label: pending > 0 ? `Syncing, ${pending} pending` : "Syncing", activity };
 	}
-	return { state: "idle", label: "Up to date" };
+	return { state: "idle", label: "Up to date", activity };
 }
