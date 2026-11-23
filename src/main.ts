@@ -1,19 +1,25 @@
 import { App, Plugin, PluginSettingTab, Setting, type Component } from "obsidian";
 import { FoldProperties } from "./foldProperties";
 import { SyncDot } from "./syncDot";
+import { SyncModeRestore } from "./syncModeRestore";
+
+// For tests run against the built main.js: the restore and its check, as the plugin runs them.
+export { restoreSyncMode, whyNotRestore } from "./syncModeRestore";
 
 interface QuietUiSettings {
 	syncDot: boolean;
 	foldProperties: boolean;
+	restoreSyncMode: boolean;
 }
 
-const DEFAULT_SETTINGS: QuietUiSettings = { syncDot: true, foldProperties: true };
+const DEFAULT_SETTINGS: QuietUiSettings = { syncDot: true, foldProperties: true, restoreSyncMode: true };
 
 export default class QuietUiPlugin extends Plugin {
 	settings: QuietUiSettings = { ...DEFAULT_SETTINGS };
-	private parts: { syncDot: Component | null; foldProperties: Component | null } = {
+	private parts: Record<keyof QuietUiSettings, Component | null> = {
 		syncDot: null,
 		foldProperties: null,
+		restoreSyncMode: null,
 	};
 
 	async onload(): Promise<void> {
@@ -26,6 +32,7 @@ export default class QuietUiPlugin extends Plugin {
 	apply(): void {
 		this.toggle("syncDot", () => new SyncDot(this.app));
 		this.toggle("foldProperties", () => new FoldProperties(this.app));
+		this.toggle("restoreSyncMode", () => new SyncModeRestore(this.app));
 	}
 
 	private toggle(key: keyof QuietUiSettings, make: () => Component): void {
@@ -67,6 +74,14 @@ class QuietUiSettingTab extends PluginSettingTab {
 			.setDesc("Every note opens with its Properties block folded to its header. Tap the header to open it.")
 			.addToggle((t) =>
 				t.setValue(this.plugin.settings.foldProperties).onChange((v) => this.plugin.update({ foldProperties: v }))
+			);
+		new Setting(containerEl)
+			.setName("Turn LiveSync back on after a fetch")
+			.setDesc(
+				"Self-hosted LiveSync's fetch (a new device's first sync, or a reset of this device) leaves every sync trigger off. When it finds exactly that, with no fetch still pending, this sets Sync Mode back to LiveSync. Any other Sync Mode setting is left alone."
+			)
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.restoreSyncMode).onChange((v) => this.plugin.update({ restoreSyncMode: v }))
 			);
 	}
 }

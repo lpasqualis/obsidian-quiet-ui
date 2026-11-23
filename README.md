@@ -1,14 +1,18 @@
 # Quiet UI
 
-An Obsidian plugin that takes two distractions off the screen, on phone and desktop:
+An Obsidian plugin that takes two distractions off the screen, on phone and desktop, and keeps Self-hosted LiveSync
+syncing after a fetch:
 
 1. **Self-hosted LiveSync's status line becomes a dot.** The line in the top-right corner of the editor
    (`Sync: 💤 ↑ 21 ↓ 0`) shows as a small colored dot instead. Tap the dot to see the full line; tap the line
    to go back to the dot. The dot is the default, and each device remembers your choice.
 2. **Properties open folded.** Every note opens with its Properties block folded to its header, so the note
    starts with its content. One tap on "Properties" opens them, exactly as Obsidian's own fold does.
+3. **LiveSync is turned back on after a fetch.** LiveSync's fetch leaves every sync trigger off; when the plugin
+   finds exactly that, it sets Sync Mode back to LiveSync, so a new device keeps syncing without a trip to the
+   settings.
 
-Each one has its own switch in the plugin's settings; both are on by default.
+Each one has its own switch in the plugin's settings; all three are on by default.
 
 ![Before and after: a note with LiveSync's line and its Properties open, and the same note with the dot and the Properties folded](docs/before-after.png)
 
@@ -48,6 +52,23 @@ For comparison, Obsidian's built-in setting (Settings > Editor > Properties in d
 
 Quiet UI keeps Visible and only folds the block, so properties stay one tap away in the note itself.
 
+## LiveSync back on after a fetch
+
+Every fetch Self-hosted LiveSync runs (a new device's first sync after its setup link, and "Reset synchronisation
+on this device") ends by switching off LiveSync mode, periodic sync and every sync-on-event trigger, and nothing
+switches them back ([vrtmrz/obsidian-livesync#1367](https://github.com/vrtmrz/obsidian-livesync/issues/1367)).
+The device then shows Sync Mode "On events" with no event turned on, and syncs nothing until someone sets Sync
+Mode by hand.
+
+Once LiveSync is ready, and every 30 seconds after, the plugin looks for exactly that state: LiveSync set up for
+CouchDB, no fetch or rebuild still pending or running, and every automatic sync switch off. Only then does it set
+Sync Mode to LiveSync, the same change LiveSync's own settings screen makes, and shows a short notice saying so.
+Any other combination is a choice someone made and is left alone: if even one sync switch is on (periodic sync,
+sync on save, sync on start, and so on), nothing changes.
+
+Turn the switch off ("Turn LiveSync back on after a fetch") if you want a device to stay in the state a fetch
+leaves.
+
 ## Install
 
 With [BRAT](https://github.com/TfTHacker/obsidian42-brat): *Add beta plugin* and enter `lpasqualis/obsidian-quiet-ui`,
@@ -59,17 +80,20 @@ By hand: download `main.js`, `manifest.json` and `styles.css` from the
 
 ## Compatibility
 
-Built and tested with Obsidian 1.15.1 and Self-hosted LiveSync 1.0.50. Both features read parts of their
-host that are not public API (LiveSync's internal services; Obsidian's Properties editor), and both fall
-back to the stock behaviour when those parts are missing: LiveSync's line shows, and Properties open the
-way Obsidian opens them.
+Built and tested with Obsidian 1.15.1 and Self-hosted LiveSync 1.0.50 and 1.0.51. All three features read parts
+of their host that are not public API (LiveSync's internal services; Obsidian's Properties editor), and all
+three fall back to the stock behaviour when those parts are missing: LiveSync's line shows, Properties open the
+way Obsidian opens them, and Sync Mode is left as LiveSync set it.
 
 ## Build
 
 ```sh
 npm install
 npm run build
+npm test
 ```
+
+`npm test` runs the Sync Mode tests against the built `main.js`.
 
 ## License
 

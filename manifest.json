@@ -1,9 +1,9 @@
 {
 	"id": "quiet-ui",
 	"name": "Quiet UI",
-	"version": "1.0.1",
+	"version": "1.1.0",
 	"minAppVersion": "1.5.0",
-	"description": "Shows Self-hosted LiveSync's status as a small colored dot you tap to expand, and opens every note with its Properties folded.",
+	"description": "Shows Self-hosted LiveSync's status as a small colored dot you tap to expand, opens every note with its Properties folded, and turns LiveSync back on after a fetch leaves every sync trigger off.",
 	"author": "Lorenzo Pasqualis",
 	"authorUrl": "https://github.com/lpasqualis",
 	"isDesktopOnly": false
