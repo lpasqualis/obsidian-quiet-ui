@@ -1,7 +1,7 @@
 # Quiet UI
 
-An Obsidian plugin that takes two distractions off the screen, on phone and desktop, and keeps Self-hosted LiveSync
-syncing after a fetch:
+An Obsidian plugin that takes two distractions off the screen, on phone and desktop, keeps Self-hosted LiveSync
+syncing after a fetch, and tells the vault's keeper how each device is doing:
 
 1. **Self-hosted LiveSync's status line becomes a dot.** The line in the top-right corner of the editor
    (`Sync: 💤 ↑ 21 ↓ 0`) shows as a small colored dot instead. Tap the dot to see the full line; tap the line
@@ -11,8 +11,11 @@ syncing after a fetch:
 3. **LiveSync is turned back on after a fetch.** LiveSync's fetch leaves every sync trigger off; when the plugin
    finds exactly that, it sets Sync Mode back to LiveSync, so a new device keeps syncing without a trip to the
    settings.
+4. **The device reports its sync status.** Every 10 minutes the device writes to the LiveSync server when it was
+   last up to date, where deleted files go on it, and how many files its trash holds, so whoever keeps the vault can
+   check every device without opening it.
 
-Each one has its own switch in the plugin's settings; all three are on by default.
+Each one has its own switch in the plugin's settings; all four are on by default.
 
 ![Before and after: a note with LiveSync's line and its Properties open, and the same note with the dot and the Properties folded](docs/before-after.png)
 
@@ -69,6 +72,30 @@ sync on save, sync on start, and so on), nothing changes.
 Turn the switch off ("Turn LiveSync back on after a fetch") if you want a device to stay in the state a fetch
 leaves.
 
+## The device's sync status
+
+Every 10 minutes (and 20 seconds after Obsidian starts) the plugin writes one small record to the LiveSync server:
+the device name LiveSync knows it by, the platform, the plugin and LiveSync versions, when the record was written,
+when LiveSync last read "Up to date" on this device, where Obsidian puts a deleted file here, which of this plugin's
+switches are on, and how many files, notes and folders the vault's `.trash` folder holds. Counts only, never a file
+name.
+
+Where a deleted file goes is Obsidian's own setting (Settings > Files and links > Deleted files, `trashOption` in
+`.obsidian/app.json`): "system" moves it to the system trash, "local" to the vault's `.trash` folder, "none" deletes
+it for good. Where there is no system trash, as on an iPhone, Obsidian treats "system" as "local". Self-hosted
+LiveSync removes a file deleted on another device through the same Obsidian call, so it follows this setting too
+(LiveSync's own "Use the trash bin" has no effect from Obsidian 1.7.2 on, as its description says). The record
+reports the setting as Obsidian's settings screen shows it; the system trash itself is not read.
+
+The record is a CouchDB local document in LiveSync's own database (`_local/quiet-ui-device-<id>`, where the id is
+made once per device and vault and kept in Obsidian's local storage), written with LiveSync's own login. CouchDB
+never replicates a local document, so no other device receives it and LiveSync itself never reads it. Reading every
+device's record is one request: `GET /<database>/_local_docs?include_docs=true`, then the ids starting
+`_local/quiet-ui-device-`.
+
+A phone writes only while Obsidian is open on it, so the record's time is also the last time the device was seen.
+Turn the switch off ("Report this device's sync status to the server") to stop it.
+
 ## Install
 
 With [BRAT](https://github.com/TfTHacker/obsidian42-brat): *Add beta plugin* and enter `lpasqualis/obsidian-quiet-ui`,
@@ -80,10 +107,11 @@ By hand: download `main.js`, `manifest.json` and `styles.css` from the
 
 ## Compatibility
 
-Built and tested with Obsidian 1.15.1 and Self-hosted LiveSync 1.0.50 and 1.0.51. All three features read parts
-of their host that are not public API (LiveSync's internal services; Obsidian's Properties editor), and all
-three fall back to the stock behaviour when those parts are missing: LiveSync's line shows, Properties open the
-way Obsidian opens them, and Sync Mode is left as LiveSync set it.
+Built and tested with Obsidian 1.15.1 and Self-hosted LiveSync 1.0.50 and 1.0.51. Every feature reads parts of
+its host that are not public API (LiveSync's internal services; Obsidian's Properties editor), and each falls back
+to the stock behaviour when those parts are missing: LiveSync's line shows, Properties open the way Obsidian opens
+them, Sync Mode is left as LiveSync set it, and no status record is written. The status
+record is written only for a CouchDB remote.
 
 ## Build
 
@@ -93,7 +121,7 @@ npm run build
 npm test
 ```
 
-`npm test` runs the Sync Mode tests against the built `main.js`.
+`npm test` runs the tests against the built `main.js`.
 
 ## License
 

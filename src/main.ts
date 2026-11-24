@@ -2,17 +2,25 @@ import { App, Plugin, PluginSettingTab, Setting, type Component } from "obsidian
 import { FoldProperties } from "./foldProperties";
 import { SyncDot } from "./syncDot";
 import { SyncModeRestore } from "./syncModeRestore";
+import { DeviceStatus } from "./deviceStatus";
 
-// For tests run against the built main.js: the restore and its check, as the plugin runs them.
+// For tests run against the built main.js: each feature's check and act, as the plugin runs them.
 export { restoreSyncMode, whyNotRestore } from "./syncModeRestore";
+export { buildRecord, countTrash, deviceId, writeRecord, RECORD_PREFIX } from "./deviceStatus";
 
 interface QuietUiSettings {
 	syncDot: boolean;
 	foldProperties: boolean;
 	restoreSyncMode: boolean;
+	reportStatus: boolean;
 }
 
-const DEFAULT_SETTINGS: QuietUiSettings = { syncDot: true, foldProperties: true, restoreSyncMode: true };
+const DEFAULT_SETTINGS: QuietUiSettings = {
+	syncDot: true,
+	foldProperties: true,
+	restoreSyncMode: true,
+	reportStatus: true,
+};
 
 export default class QuietUiPlugin extends Plugin {
 	settings: QuietUiSettings = { ...DEFAULT_SETTINGS };
@@ -20,6 +28,7 @@ export default class QuietUiPlugin extends Plugin {
 		syncDot: null,
 		foldProperties: null,
 		restoreSyncMode: null,
+		reportStatus: null,
 	};
 
 	async onload(): Promise<void> {
@@ -33,6 +42,7 @@ export default class QuietUiPlugin extends Plugin {
 		this.toggle("syncDot", () => new SyncDot(this.app));
 		this.toggle("foldProperties", () => new FoldProperties(this.app));
 		this.toggle("restoreSyncMode", () => new SyncModeRestore(this.app));
+		this.toggle("reportStatus", () => new DeviceStatus(this.app, this.manifest.version, () => ({ ...this.settings })));
 	}
 
 	private toggle(key: keyof QuietUiSettings, make: () => Component): void {
@@ -82,6 +92,14 @@ class QuietUiSettingTab extends PluginSettingTab {
 			)
 			.addToggle((t) =>
 				t.setValue(this.plugin.settings.restoreSyncMode).onChange((v) => this.plugin.update({ restoreSyncMode: v }))
+			);
+		new Setting(containerEl)
+			.setName("Report this device's sync status to the server")
+			.setDesc(
+				"Every 10 minutes, writes to the LiveSync server when this device was last up to date, where Obsidian puts deleted files here, and how many files the vault's trash holds (counts only, never a file name), so the vault's keeper can check every device without opening it."
+			)
+			.addToggle((t) =>
+				t.setValue(this.plugin.settings.reportStatus).onChange((v) => this.plugin.update({ reportStatus: v }))
 			);
 	}
 }

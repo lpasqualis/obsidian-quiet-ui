@@ -1,7 +1,7 @@
 {
 	"name": "obsidian-quiet-ui",
-	"version": "1.1.0",
-	"description": "Obsidian plugin: Self-hosted LiveSync's status line as a tap-to-expand dot, and note Properties folded on open, and LiveSync turned back on after a fetch.",
+	"version": "1.2.0",
+	"description": "Obsidian plugin: Self-hosted LiveSync's status line as a tap-to-expand dot, and note Properties folded on open, LiveSync turned back on after a fetch, and the device's sync status reported to the server.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {

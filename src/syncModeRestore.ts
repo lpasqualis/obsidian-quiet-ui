@@ -1,5 +1,5 @@
 import { Component, Notice, type App } from "obsidian";
-import { LIVESYNC_ID } from "./syncState";
+import { liveSyncServices, whyNotReady, type LiveSyncServices } from "./liveSync";
 
 /**
  * Puts Self-hosted LiveSync back in LiveSync mode after its first fetch left every automatic sync off.
@@ -31,44 +31,13 @@ const COUCHDB = "";
 const FIRST_CHECK_MS = 5000;
 const EVERY_MS = 30000;
 
-type Settings = Record<string, unknown>;
-
-/** The parts of Self-hosted LiveSync (1.0.x) this reads and calls. All optional: any of them may move. */
-interface LiveSyncServices {
-	setting?: {
-		currentSettings?: () => Settings | undefined;
-		applyPartial?: (partial: Settings, save: boolean) => Promise<unknown>;
-	};
-	control?: { applySettings?: () => Promise<unknown> };
-	appLifecycle?: { isReady?: () => boolean; isSuspended?: () => boolean };
-}
-
-function liveSyncServices(app: App): LiveSyncServices | undefined {
-	// app.plugins is not in the public API typings.
-	const plugins = (app as unknown as { plugins?: { plugins?: Record<string, unknown> } }).plugins;
-	const plugin = plugins?.plugins?.[LIVESYNC_ID] as { core?: { services?: LiveSyncServices } } | undefined;
-	return plugin?.core?.services;
-}
-
 /** Why Sync Mode is not to be touched now, or "" when the state is exactly the one a fetch leaves. */
 export async function whyNotRestore(app: App): Promise<string> {
 	const services = liveSyncServices(app);
-	const setting = services?.setting;
-	const life = services?.appLifecycle;
-	if (
-		!setting?.currentSettings ||
-		!setting.applyPartial ||
-		!services?.control?.applySettings ||
-		!life?.isReady ||
-		!life.isSuspended
-	) {
-		return "LiveSync is not loaded";
-	}
-	if (!life.isReady() || life.isSuspended()) return "LiveSync is not ready";
-	const s = setting.currentSettings();
-	if (!s || !s.isConfigured) return "LiveSync is not configured";
+	const why = whyNotReady(services, { apply: true });
+	if (why) return why;
+	const s = services!.setting!.currentSettings!()!;
 	if ((s.remoteType || COUCHDB) !== COUCHDB) return "the remote is not CouchDB";
-	if (s.suspendFileWatching || s.suspendParseReplicationResult) return "a fetch or rebuild is running";
 	const on = OFF_AFTER_FETCH.filter((k) => s[k]);
 	if (on.length) return "sync is on: " + on.join(", ");
 	for (const f of FLAG_FILES) {
